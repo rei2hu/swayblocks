@@ -40,8 +40,14 @@ Once you've added your script files, go into `mix.exs` and throw them in the app
            # ping a service every 5 seconds so we could add
            # {:"scripts/pubip, 60000} to only update that block every minute
            # also why didn't i put the comments in the actual file who knows
+           # also the order of these things will determine the order
+           # of the blocks on your bar. assuming your bar hugs the top right,
+           # date would be the furthest right followed by battery, brightness
+           # and finally wifi
            {:"scripts/wifi", 5000},
-           {:"scripts/battery", 1500}
+           {:"scripts/brightness", 1000},
+           {:"scripts/battery", 10000},
+           {:"scripts/date", 1000}
          ]},
       extra_applications: [:logger]
     ]
