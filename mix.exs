@@ -18,7 +18,9 @@ defmodule SwayStatus.MixProject do
         {SwayStatus,
          [
            {:"scripts/wifi", 5000},
-           {:"scripts/battery", 1500}
+           {:"scripts/brightness", 1000},
+           {:"scripts/battery", 10000},
+           {:"scripts/date", 1000}
          ]},
       extra_applications: [:logger]
     ]

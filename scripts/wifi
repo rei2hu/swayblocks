@@ -1,0 +1,41 @@
+#!/bin/bash
+
+function rg_color_lerp {
+	# lower current means more red
+	CURRENT=$1
+	TOTAL=$2
+	RED=$(printf %.f $(bc -l <<< "$TOTAL-$CURRENT"))
+	GREEN=$(printf %.f $(bc -l <<< "$CURRENT"))
+	HALF=$(printf %.f $(bc -l <<< "$TOTAL/2"))
+	MULT=$(printf %.f $(bc -l <<< "255/$HALF"))
+	RED=$(printf %02X $(( RED < HALF ? RED*MULT : 255 )))
+	GREEN=$(printf %02X $(( GREEN < HALF ? GREEN*MULT : 255 )))
+	echo "#$RED${GREEN}00"
+}
+
+LOCAL_IP=$(hostname -i)
+COLOR="#ffff44"
+VPN_COLOR="#333333"
+SIGNAL_STR=$(cat /proc/net/wireless | awk 'NR==3 {print $3 00}')
+SIGNAL_COLOR=$(rg_color_lerp $(printf %.f "$SIGNAL_STR") 70)
+SIGNAL_INFO="📶 $SIGNAL_STR"
+
+if [[ ! $LOCAL_IP == 127* ]]; then
+	COLOR="#44ff44"
+fi
+if ip addr | grep tun; then
+	VPN_COLOR="#aaaa00"
+	VPN_STATUS=" 😎"
+fi
+WIRELESS_INFO="📡 $(echo $LOCAL_IP | awk '{print $NF}')$VPN_STATUS"
+
+echo -n "full_text:$WIRELESS_INFO///"
+echo -n "color:$COLOR///"
+echo -n "border:$VPN_COLOR///"
+echo -n "separator_block_width:10///"
+echo "separator:$CONNECTED"
+
+echo -n "full_text:$SIGNAL_INFO///"
+echo -n "color:$SIGNAL_COLOR///"
+echo -n "border:$VPN_COLOR///"
+echo "separator_block_width:25"

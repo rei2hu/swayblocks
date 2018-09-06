@@ -1,0 +1,31 @@
+#!/bin/bash
+
+function rg_color_lerp {
+	# lower current means more red
+	CURRENT=$1
+	TOTAL=$2
+	RED=$(printf %.f $(bc -l <<< "$TOTAL-$CURRENT"))
+	GREEN=$(printf %.f $(bc -l <<< "$CURRENT"))
+	HALF=$(printf %.f $(bc -l <<< "$TOTAL/2"))
+	MULT=$(printf %.f $(bc -l <<< "255/$HALF"))
+	RED=$(printf %02X $(( RED < HALF ? RED*MULT : 255 )))
+	GREEN=$(printf %02X $(( GREEN < HALF ? GREEN*MULT : 255 )))
+	echo "#$RED${GREEN}00"
+}
+
+BATTERY=$(acpi -b | head -n 1 | sed -rn 's/^.*, (.*?)%.*$/\1/p')
+REMAIN=$(acpi -b | head -n 1 | sed -rn 's/^.*, (.*?):[0-9][0-9] remaining$/\1/p')
+if [[ $REMAIN == '' ]]; then
+	REMAIN="+"
+fi
+MULT=20
+OUTOF10=$(bc -l <<< "$BATTERY/10")
+COLOR=$(rg_color_lerp $OUTOF10 10)
+NUM_CLOSED=$(printf %.f $(bc -l <<< "$OUTOF10/10*$MULT"))
+BATTERY_FILL=$(printf '▮%.0s' $(seq 1 $NUM_CLOSED))
+BATTERY_EMPTY=$(printf '▯%.0s' $(seq 1 $((MULT - $NUM_CLOSED))))
+BATTERY_INFO="🔋 ($REMAIN) $BATTERY_FILL$BATTERY_EMPTY"
+
+echo -n "full_text:$BATTERY_INFO///"
+echo -n "color:$COLOR///"
+echo "separator_block_width:25"
