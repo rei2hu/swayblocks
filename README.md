@@ -1,8 +1,8 @@
-# Sway.Blocks
-
 ##### Disclaimer
 
 Forgive me for any mistakes for I am new to Elixir.
+
+# Sway.Blocks
 
 So just make a scripts folder in the project and dump some bash scripts in them. Echo things out like in the following example
 
@@ -17,7 +17,7 @@ echo -n "full_text:$(date)///"
 echo "color:#fffff"
 
 echo -n "full_text:another block nani???///"
-echo -n "border: #123456///"
+echo -n "border:#123456///"
 echo "color:#ff0000"
 ```
 
@@ -47,6 +47,8 @@ Once you've added your script files, go into `mix.exs` and throw them in the app
     ]
   end
 ```
+
+Also you can update the scripts and they'll be used as long as they were loaded in the beginning
 
 ## Installation
 
