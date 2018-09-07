@@ -2,8 +2,9 @@
 
 Forgive me for any mistakes for I am new to Elixir.
 
-# Sway.Blocks
+### swayblocks
 
+#### Scripts
 So just make a scripts folder in the project and dump some bash scripts in them. Echo things out like in the following example
 
 ```bash
@@ -23,38 +24,39 @@ echo "color:#ff0000"
 
 See [this link](https://i3wm.org/docs/i3bar-protocol.html) for the list of valid fields and stuff
 
-Once you've added your script files, go into `mix.exs` and throw them in the application module thing
+Once you've added your script files, go into `mix.exs` and throw them in the application module thing. Each tuple must have
+at least 2 entries and can have at most 3 like `{script, timer, click_script}` where `click_script` is optional. Make sure the script names are atoms and the highest a timer can be is `999999` because that's the number I put in the code.
 
 ```exs
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       mod:
         {SwayStatus,
          [
-           # make sure the file paths are put in as atoms
-           # also it doesn't have to be in the scripts folder, i lied
-           # and the second number is a timer. if you have an expensive script,
-           # you can give it a longer timer and it will be run less often
-           # for example, you might want your external ip but dont want to
-           # ping a service every 5 seconds so we could add
-           # {:"scripts/pubip, 60000} to only update that block every minute
-           # also why didn't i put the comments in the actual file who knows
-           # also the order of these things will determine the order
-           # of the blocks on your bar. assuming your bar hugs the top right,
-           # date would be the furthest right followed by battery, brightness
-           # and finally wifi
-           {:"scripts/wifi", 5000},
-           {:"scripts/brightness", 1000},
+           {:"scripts/date", 1000},
            {:"scripts/battery", 10000},
-           {:"scripts/date", 1000}
+           {:"scripts/brightness", 1000},
+           {:"scripts/wifi", 5000},
+           {:"scripts/volume", 5000, :"scripts/mute"},
+           {:"scripts/cmus", 5000}
          ]},
       extra_applications: [:logger]
     ]
   end
 ```
 
-Also you can update the scripts and they'll be used as long as they were loaded in the beginning
+Also you can update the scripts and they'll be used as long as they were loaded in the beginning.
+
+#### Click Events
+
+It may or may not get kind of laggy when you click something. Clicking a block will update it's contents
+in addition to running whatever script you defined in the `mix.exs` file.
+
+#### Screenshot
+This is how it looks with the packaged scripts... assuming they work for you
+![a picture of the bar](https://i.imgur.com/46pFMLg.png)
+Workspaces not included, using xos4 Terminus for the font
+
 
 ## Installation
 
