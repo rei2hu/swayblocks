@@ -16,8 +16,6 @@ defmodule Clicks do
   end
 
   defp listen_for_clicks(files) do
-    :timer.sleep(100)
-
     IO.gets("")
     |> Poison.decode()
     |> handle_click(files)
@@ -28,7 +26,7 @@ defmodule Clicks do
   defp handle_click(json, files) do
     case json do
       {:ok, map} ->
-        GenServer.call(:Updater, {:click, map})
+        :ok = GenServer.call(:Updater, {:click, map})
 
       _ ->
         nil

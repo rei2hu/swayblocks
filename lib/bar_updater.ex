@@ -30,7 +30,7 @@ defmodule Updater do
     {order, files} = state
 
     handle_click(files, clickmap)
-    send(self(), {:checkupdate, 0})
+    send(self(), {:checkupdate, 0, false})
 
     {:reply, :ok, {order, files}}
   end
@@ -60,7 +60,7 @@ defmodule Updater do
   def handle_info(:start, state) do
     IO.puts("{\"version\":1,\"click_events\":true}")
     IO.puts("[")
-    send(self(), {:checkupdate, 0})
+    send(self(), {:checkupdate, 0, true})
     {:noreply, state}
   end
 
@@ -73,7 +73,7 @@ defmodule Updater do
   end
 
   @impl true
-  def handle_info({:checkupdate, time}, state) do
+  def handle_info({:checkupdate, time, loop}, state) do
     {order, files} = state
 
     {tasks, files} =
@@ -96,16 +96,18 @@ defmodule Updater do
     tasks
     |> Enum.map(&Task.await/1)
 
-    files
-    |> send_blocks(order)
-    |> get_minimum_time
-    |> wait_for_time
+    if loop do
+      files
+      |> send_blocks(order)
+      |> get_minimum_time
+      |> wait_for_time
+    end
 
     {:noreply, {order, files}}
   end
 
   defp wait_for_time(time) do
-    Process.send_after(self(), {:checkupdate, time}, time)
+    Process.send_after(self(), {:checkupdate, time, true}, time)
   end
 
   defp get_minimum_time(state) do
