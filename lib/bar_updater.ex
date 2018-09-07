@@ -1,95 +1,137 @@
 defmodule Updater do
+  use GenServer
+
   def start_link(args) do
-    files =
-      args
-      |> Updater.prepare_processes()
-
-    Task.async(fn -> Updater.start(files) end)
-
-    {:ok, self()}
+    GenServer.start_link(__MODULE__, args, name: :Updater)
   end
 
-  def prepare_processes(files) do
+  @impl true
+  def init(files) do
+    files =
+      files
+      |> Enum.map(fn x ->
+        case x do
+          {a, b} -> {a, b, nil}
+          {a, b, c} -> {a, b, c}
+        end
+      end)
+      |> Enum.map_reduce(%{}, fn x, acc ->
+        {name, time, click} = x
+        {name, Map.put(acc, name, %{:click => click, :time => time, :left => 0, :content => nil})}
+      end)
+
+    send(self(), :start)
+
+    {:ok, files}
+  end
+
+  @impl true
+  def handle_call({:click, clickmap}, _from, state) do
+    {order, files} = state
+
+    handle_click(files, clickmap)
+    send(self(), {:checkupdate, 0})
+
+    {:reply, :ok, {order, files}}
+  end
+
+  defp handle_click(files, clickmap) do
+    key = clickmap["name"]
+    key = String.to_atom(key)
+    %{^key => map} = files
+
+    case map[:click] do
+      nil ->
+        nil
+
+      script ->
+        spawn(fn -> System.cmd("bash", [Atom.to_string(script)]) end)
+    end
+
+    Task.await(update_contents(key))
+  end
+
+  defp update_contents(file) do
+    parent = self()
+    Task.async(fn -> send(parent, {:update, file, BlockWatcher.update(file)}) end)
+  end
+
+  @impl true
+  def handle_info(:start, state) do
     IO.puts("{\"version\":1,\"click_events\":true}")
     IO.puts("[")
+    send(self(), {:checkupdate, 0})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:update, file, content}, state) do
+    {order, files} = state
+    %{^file => map} = files
+    state = {order, Map.put(files, file, Map.put(map, :content, content))}
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:checkupdate, time}, state) do
+    {order, files} = state
+
+    {tasks, files} =
+      files
+      |> Enum.reduce({[], %{}}, fn x, acc ->
+        {list, map} = acc
+        {name, map2} = x
+        %{:time => refresh, :left => left} = map2
+        newtime = left - time
+
+        cond do
+          newtime <= 0 ->
+            {[update_contents(name) | list], Map.put(map, name, Map.put(map2, :left, refresh))}
+
+          true ->
+            {list, Map.put(map, name, Map.put(map2, :left, newtime))}
+        end
+      end)
+
+    tasks
+    |> Enum.map(&Task.await/1)
 
     files
-    |> Enum.map(fn x ->
-      name = elem(x, 0)
+    |> send_blocks(order)
+    |> get_minimum_time
+    |> wait_for_time
 
-      %{
-        id: name,
-        start: {BlockWatcher, :start_link, [name]}
-      }
-    end)
-    |> Supervisor.start_link(strategy: :one_for_one)
-
-    files
+    {:noreply, {order, files}}
   end
 
-  defp wait_and_subtract_time({info, time}) do
-    Process.send_after(self(), :goupdate, time)
-
-    receive do
-      :goupdate ->
-        info
-        |> Enum.map(fn x -> Map.put(x, :left, x[:left] - time) end)
-        |> execute_scripts
-        |> get_minimum_time
-        |> wait_and_subtract_time
-
-      _ ->
-        "monkaGIGA"
-    end
+  defp wait_for_time(time) do
+    Process.send_after(self(), {:checkupdate, time}, time)
   end
 
-  def start(scripts) do
-    scripts
-    |> Enum.map_reduce(99999, fn x, acc ->
-      name = elem(x, 0)
-      time = elem(x, 1)
-
-      {
-        %{:name => name, :time => time, :left => time},
-        min(time, acc)
-      }
-    end)
-    |> wait_and_subtract_time
-  end
-
-  defp get_minimum_time(info) do
-    info
-    |> Enum.map_reduce(99999, fn x, acc ->
-      %{:time => time, :left => left} = x
-      left = if left <= 0, do: time, else: left
-
-      {
-        Map.put(x, :left, left),
-        min(left, acc)
-      }
+  defp get_minimum_time(state) do
+    state
+    |> Enum.reduce(999_999, fn x, acc ->
+      {_, %{:left => left}} = x
+      min(left, acc)
     end)
   end
 
-  defp execute_scripts(info) do
-    info
-    |> Enum.map_join(",", fn x ->
-      %{:name => name, :left => left} = x
+  defp send_blocks(state, order) do
+    order
+    |> Enum.reduce([], fn x, acc ->
+      %{^x => %{:content => content}} = state
 
-      case left do
-        0 ->
-          %{:blocks => blocks} = GenServer.call(name, :update)
-          Enum.join(blocks, ",")
+      case content do
+        nil ->
+          acc
 
         _ ->
-          %{:blocks => blocks} = GenServer.call(name, :get)
-          Enum.join(blocks, ",")
+          [Enum.join(content, ",") | acc]
       end
     end)
-    |> send_blocks(info)
-  end
+    |> Enum.join(",")
+    |> (&IO.puts("[" <> &1 <> "]")).()
 
-  defp send_blocks(blocks, info) do
-    IO.puts("[" <> blocks <> "]")
-    info
+    state
   end
 end

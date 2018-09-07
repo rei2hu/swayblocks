@@ -31,27 +31,13 @@ defmodule BlockWatcher do
     {:reply, state, state}
   end
 
-  defp update(state) do
-    parent = self()
-    block = state[:name] |> Atom.to_string()
-    spawn(fn -> send(parent, System.cmd("bash", [block])) end)
+  def update(name) do
+    name = name |> Atom.to_string()
+    {blocks, 0} = System.cmd("bash", [name])
 
-    receive do
-      # good response
-      {blocks, 0} ->
-        blocks
-        |> String.split("\n")
-        |> handle_blocks(block)
-        |> (&Map.put(state, :blocks, &1)).()
-
-      # bad block response
-      _ ->
-        nil
-    after
-      # 500ms timeout
-      500 ->
-        nil
-    end
+    blocks
+    |> String.split("\n")
+    |> handle_blocks(name)
   end
 
   defp handle_blocks(list, name) do

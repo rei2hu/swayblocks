@@ -28,13 +28,7 @@ defmodule Clicks do
   defp handle_click(json, files) do
     case json do
       {:ok, map} ->
-        case script = files[String.to_atom(map["name"])] do
-          nil ->
-            nil
-
-          _ ->
-            spawn(fn -> System.cmd("bash", [Atom.to_string(script)]) end)
-        end
+        GenServer.call(:Updater, {:click, map})
 
       _ ->
         nil
