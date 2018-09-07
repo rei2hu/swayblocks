@@ -26,11 +26,17 @@ defmodule Updater do
   end
 
   defp wait_and_subtract_time({info, time}) do
-    :timer.sleep(time)
+    Process.send_after(self(), :goupdate, time)
 
-    info
-    |> Enum.map(fn x -> Map.put(x, :left, x[:left] - time) end)
-    |> execute_scripts
+    receive do
+      :goupdate ->
+        info
+        |> Enum.map(fn x -> Map.put(x, :left, x[:left] - time) end)
+        |> execute_scripts
+
+      _ ->
+        "monkaGIGA"
+    end
   end
 
   def start(scripts) do
