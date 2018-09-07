@@ -1,0 +1,34 @@
+#!/bin/bash
+
+function sec_display {
+	MIN=$(($1/60))
+	SEC=$(($1%60))
+	echo $(printf %01d $MIN):$(printf %02d $SEC)
+}
+
+INFO="$(cmus-remote -Q 2> /dev/null)"
+if [[ ! $INFO == "" ]]; then
+	MUSIC_INFO="$(echo "$INFO" | sed -rn 's/tag (title|artist) (.*?)\n?/\2/p')"
+	DURATION=$(echo "$INFO" | sed -rn 's/duration (.*?)/\1/p')
+	POSITION=$(echo "$INFO" | sed -rn 's/position (.*?)/\1/p')
+	STATUS=$(echo "$INFO" | sed -rn 's/status (.*?)/\1/p')
+	STATUS_ICON="⏸"
+	if [[ $STATUS == "playing" ]]; then
+		STATUS_ICON="▶"
+	fi
+	if [[ $MUSIC_INFO == "" ]]; then
+		MUSIC_INFO=$(echo "$INFO" | sed -rn 's/file .*\/(.*)$/\1/p')
+	fi
+	MUSIC_INFO="♬ $(echo -n "[$MUSIC_INFO]" | sed -z 's/\n/ - /g')"
+	TIME_INFO="$(sec_display $POSITION)/$(sec_display $DURATION) $STATUS_ICON"
+	MUSIC_COLOR="#44ffff"
+fi
+
+echo -n "full_text:$MUSIC_INFO///"
+echo -n "separator:false///"
+echo -n "separator_block_width:10///"
+echo "color:$MUSIC_COLOR"
+
+echo -n "full_text:$TIME_INFO///"
+echo -n "separator_block_width:25///"
+echo "color:$MUSIC_COLOR"

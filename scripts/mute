@@ -1,0 +1,3 @@
+#!/bin/bash
+
+pactl set-sink-mute $(pacmd list-sinks |awk '/* index:/{print $3}') toggle

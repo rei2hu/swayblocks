@@ -41,7 +41,7 @@ defmodule BlockWatcher do
       {blocks, 0} ->
         blocks
         |> String.split("\n")
-        |> handle_blocks
+        |> handle_blocks(block)
         |> (&Map.put(state, :blocks, &1)).()
 
       # bad block response
@@ -54,20 +54,20 @@ defmodule BlockWatcher do
     end
   end
 
-  defp handle_blocks(list) do
+  defp handle_blocks(list, name) do
     case list do
       [] ->
         []
 
       [head | tail] when head !== "" ->
-        [handle_block(head) | handle_blocks(tail)]
+        [handle_block(head, name) | handle_blocks(tail, name)]
 
       [_ | tail] ->
-        handle_blocks(tail)
+        handle_blocks(tail, name)
     end
   end
 
-  defp handle_block(list) do
+  defp handle_block(list, name) do
     String.split(list, "///")
     |> Enum.reduce(%{}, fn e, acc ->
       case String.split(e, ":", parts: 2) do
@@ -78,6 +78,7 @@ defmodule BlockWatcher do
           nil
       end
     end)
+    |> Map.put("name", name)
     |> Poison.encode()
     |> check_output
   end

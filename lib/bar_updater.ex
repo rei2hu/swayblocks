@@ -1,23 +1,25 @@
 defmodule Updater do
   def start_link(args) do
-    args
-    |> Updater.prepare_processes()
-    |> Updater.start()
+    files =
+      args
+      |> Updater.prepare_processes()
+
+    Task.async(fn -> Updater.start(files) end)
 
     {:ok, self()}
   end
 
   def prepare_processes(files) do
-    IO.puts("{\"version\":1}")
+    IO.puts("{\"version\":1,\"click_events\":true}")
     IO.puts("[")
 
     files
     |> Enum.map(fn x ->
-      {string, _} = x
+      name = elem(x, 0)
 
       %{
-        id: string,
-        start: {BlockWatcher, :start_link, [string]}
+        id: name,
+        start: {BlockWatcher, :start_link, [name]}
       }
     end)
     |> Supervisor.start_link(strategy: :one_for_one)
@@ -33,6 +35,8 @@ defmodule Updater do
         info
         |> Enum.map(fn x -> Map.put(x, :left, x[:left] - time) end)
         |> execute_scripts
+        |> get_minimum_time
+        |> wait_and_subtract_time
 
       _ ->
         "monkaGIGA"
@@ -42,7 +46,8 @@ defmodule Updater do
   def start(scripts) do
     scripts
     |> Enum.map_reduce(99999, fn x, acc ->
-      {name, time} = x
+      name = elem(x, 0)
+      time = elem(x, 1)
 
       {
         %{:name => name, :time => time, :left => time},
@@ -63,7 +68,6 @@ defmodule Updater do
         min(left, acc)
       }
     end)
-    |> wait_and_subtract_time
   end
 
   defp execute_scripts(info) do
@@ -82,7 +86,6 @@ defmodule Updater do
       end
     end)
     |> send_blocks(info)
-    |> get_minimum_time
   end
 
   defp send_blocks(blocks, info) do

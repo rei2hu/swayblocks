@@ -17,6 +17,8 @@ defmodule SwayStatus.MixProject do
       mod:
         {SwayStatus,
          [
+           {:"scripts/cmus", 5000},
+           {:"scripts/volume", 5000, :"scripts/mute"},
            {:"scripts/wifi", 5000},
            {:"scripts/brightness", 1000},
            {:"scripts/battery", 10000},

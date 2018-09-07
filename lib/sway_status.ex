@@ -6,6 +6,10 @@ defmodule SwayStatus do
       %{
         id: :Updater,
         start: {Updater, :start_link, [args]}
+      },
+      %{
+        id: :Clicks,
+        start: {Clicks, :start_link, [args]}
       }
     ]
     |> Supervisor.start_link(strategy: :one_for_one)
