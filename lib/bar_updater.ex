@@ -47,7 +47,7 @@ defmodule Updater do
 
       script ->
         {:ok, str} = Poison.encode(clickmap)
-        spawn(fn -> System.cmd(System.cwd() <> "/" <> Atom.to_string(script), [str]) end)
+        System.cmd(System.cwd() <> "/" <> Atom.to_string(script), [str])
     end
 
     Task.await(update_contents(key))
