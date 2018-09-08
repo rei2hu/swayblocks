@@ -12,14 +12,16 @@ if [[ ! $INFO == "" ]]; then
 	DURATION=$(echo "$INFO" | sed -rn 's/duration (.*?)/\1/p')
 	POSITION=$(echo "$INFO" | sed -rn 's/position (.*?)/\1/p')
 	STATUS=$(echo "$INFO" | sed -rn 's/status (.*?)/\1/p')
-	STATUS_ICON="⏸"
 	if [[ $STATUS == "playing" ]]; then
 		STATUS_ICON="▶"
+	else
+		STATUS_ICON="⏸"
 	fi
 	if [[ $MUSIC_INFO == "" ]]; then
 		MUSIC_INFO=$(echo "$INFO" | sed -rn 's/file .*\/(.*)$/\1/p')
+	else
+		MUSIC_INFO="♬ $(echo -n "[$MUSIC_INFO]" | sed -z 's/\n/ - /g')"
 	fi
-	MUSIC_INFO="♬ $(echo -n "[$MUSIC_INFO]" | sed -z 's/\n/ - /g')"
 	TIME_INFO="$(sec_display $POSITION)/$(sec_display $DURATION) $STATUS_ICON"
 	MUSIC_COLOR="#44ffff"
 fi

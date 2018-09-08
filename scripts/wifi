@@ -1,15 +1,20 @@
 #!/bin/bash
 
-function rg_color_lerp {
-	# lower current means more red
-	CURRENT=$1
-	TOTAL=$2
-	RED=$(printf %.f $(bc -l <<< "$TOTAL-$CURRENT"))
-	GREEN=$(printf %.f $(bc -l <<< "$CURRENT"))
-	HALF=$(printf %.f $(bc -l <<< "$TOTAL/2"))
-	MULT=$(printf %.f $(bc -l <<< "255/$HALF"))
-	RED=$(printf %02X $(( RED < HALF ? RED*MULT : 255 )))
-	GREEN=$(printf %02X $(( GREEN < HALF ? GREEN*MULT : 255 )))
+function rg_color {
+	CURRENT=$1 # non decimal (floored)
+	TOTAL=$2 # non decimal
+	HALF=$(( TOTAL / 2 )) # non decimal (floored)
+	RED=255
+	GREEN=255
+	if [ $CURRENT -gt $HALF ]; then
+		# calculate amount of red
+		RED=$(( (255 / HALF) * (TOTAL - CURRENT) ))
+	else
+		# calculate amount of green
+		GREEN=$(( (255 / HALF) * (CURRENT) ))
+	fi
+	RED="$(printf %02X $RED)"
+	GREEN="$(printf %02X $GREEN)"
 	echo "#$RED${GREEN}00"
 }
 
@@ -17,7 +22,7 @@ LOCAL_IP=$(hostname -i)
 COLOR="#ffff44"
 VPN_COLOR="#333333"
 SIGNAL_STR=$(cat /proc/net/wireless | awk 'NR==3 {print $3 00}')
-SIGNAL_COLOR=$(rg_color_lerp $(printf %.f "$SIGNAL_STR") 70)
+SIGNAL_COLOR=$(rg_color $(printf %.f "$SIGNAL_STR") 70)
 SIGNAL_INFO="📶 $SIGNAL_STR"
 
 if [[ ! $LOCAL_IP == 127* ]]; then

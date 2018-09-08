@@ -18,11 +18,11 @@ defmodule SwayStatus.MixProject do
         {SwayStatus,
          [
            {:"scripts/date", 1000},
-           {:"scripts/battery", 10000},
-           {:"scripts/brightness", 1000},
+           {:"scripts/battery", 30000},
+           {:"scripts/brightness", 10000},
            {:"scripts/wifi", 5000},
-           {:"scripts/volume", 5000, :"scripts/mute"},
-           {:"scripts/cmus", 5000}
+           {:"scripts/volume", 5000, :"scripts/click/mute"},
+           {:"scripts/cmus", 5000, :"scripts/click/pause"}
          ]},
       extra_applications: [:logger]
     ]
