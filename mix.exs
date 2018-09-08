@@ -21,7 +21,7 @@ defmodule SwayStatus.MixProject do
            {:"scripts/battery", 30000},
            {:"scripts/brightness", 10000},
            {:"scripts/wifi", 5000},
-           {:"scripts/volume", 5000, :"scripts/click/mute"},
+           {:"scripts/volume", 5000, :"scripts/click/volctrl"},
            {:"scripts/cmus", 5000, :"scripts/click/pause"}
          ]},
       extra_applications: [:logger]

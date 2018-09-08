@@ -17,6 +17,7 @@ defmodule Updater do
       end)
       |> Enum.map_reduce(%{}, fn x, acc ->
         {name, time, click} = x
+
         {name, Map.put(acc, name, %{:click => click, :time => time, :left => 0, :content => nil})}
       end)
 
@@ -45,7 +46,8 @@ defmodule Updater do
         nil
 
       script ->
-        spawn(fn -> System.cmd("bash", [Atom.to_string(script)]) end)
+        {:ok, str} = Poison.encode(clickmap)
+        spawn(fn -> System.cmd(System.cwd() <> "/" <> Atom.to_string(script), [str]) end)
     end
 
     Task.await(update_contents(key))

@@ -1,0 +1,23 @@
+#!/bin/node
+
+const clickInfo = JSON.parse(process.argv[2]);
+const { execSync } = require('child_process');
+switch (clickInfo.button) {
+	
+	case 1: // primary
+		execSync('amixer set Master 10%+')
+		break;
+	case 2: // middle
+		execSync('amixer set Master toggle')
+		break;
+	case 3: // right
+		execSync('amixer set Master 10%-')
+		break;
+	case 4: // wheel up
+		execSync('amixer set Master 3%+')
+		break;
+	case 5: // wheel down
+		execSync('amixer set Master 3%-')
+		break;
+	
+}

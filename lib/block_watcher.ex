@@ -33,7 +33,7 @@ defmodule BlockWatcher do
 
   def update(name) do
     name = name |> Atom.to_string()
-    {blocks, 0} = System.cmd("bash", [name])
+    {blocks, 0} = System.cmd(System.cwd() <> "/" <> name, [])
 
     blocks
     |> String.split("\n")

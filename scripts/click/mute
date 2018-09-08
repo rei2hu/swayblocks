@@ -1,3 +1,0 @@
-#!/bin/bash
-
-amixer set Master toggle > /dev/null 2>&1
