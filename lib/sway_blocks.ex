@@ -1,4 +1,4 @@
-defmodule SwayStatus do
+defmodule SwayBlocks do
   use Application
 
   def start(_type, args) do
