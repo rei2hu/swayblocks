@@ -9,7 +9,7 @@ General Rules:
 2. Make sure they have the right [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix))
 
 ##### Installation
-I'm trying to figure out how to add this to the AUR. For now just clone this repository and run the commands
+Clone this repository and run the commands
 ```
 make create && make build
 ```
@@ -19,6 +19,8 @@ simple scripts that come prepackaged as an example of how to configure the appli
 
 `make build` should give you a file where the first line is `#!/usr/bin/env_escript`. This is what should be
 your `status_command` should be set to.
+
+Available through the [AUR](https://aur.archlinux.org/packages/swayblocks/)
 
 ##### config.exs
 In the config file, you will find this; an array of tuples. The first entry in the tuple is the block script,

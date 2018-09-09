@@ -2,7 +2,7 @@ defmodule SwayBlocks do
   use Application
 
   def start(_type, _args) do
-    args = Application.get_env(:SwayBlocks, :args, [])
+    {args, _} = Code.eval_file(Path.expand("~/.config/swayblocks/config.exs"))
 
     [
       %{
