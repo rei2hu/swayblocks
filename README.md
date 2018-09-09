@@ -1,16 +1,44 @@
-##### Disclaimer
+###### Disclaimer
 Forgive me for any mistakes for I am new to Elixir.
 
 ### swayblocks
 I guess you can call this my version of i3blocks.
 
 General Rules:
-1. Make sure your scripts are executable (`chmod +x your/script`).
+1. Make sure your scripts are executable (`chmod +x your/script`)
 2. Make sure they have the right [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix))
-3. Make sure they are entered as atoms in the `mix.exs` file with a path which will be relative to the cwd
 
-##### Scripts
-For scripts that will output to the status bar, each block should be in the format `key:value///key:value\n`.
+##### Installation
+I'm trying to figure out how to add this to the AUR. For now just clone this repository and run the commands
+```
+make create && make build
+```
+`make create` will create `~/.config/swayblocks/` folder and move `config.exs` and the `scripts` folder into
+it. `config.exs` is the configuration file where you add scripts and times, the scripts folder is just a few
+simple scripts that come prepackaged as an example of how to configure the application.
+
+`make build` should give you a file where the first line is `#!/usr/bin/env_escript`. This is what should be
+your `status_command` should be set to.
+
+##### config.exs
+In the config file, you will find this; an array of tuples. The first entry in the tuple is the block script,
+the second entry in the tuple is the time to update it, and the third entry in the tuple (optional) is the script
+to run when the block is clicked. Feel free to add or delete from here as you please.
+
+```elixir
+config :SwayBlocks,
+  args: [
+    {"~/.config/swayblocks/scripts/date", 1000},
+    {"~/.config/swayblocks/scripts/battery", 30000},
+    {"~/.config/swayblocks/scripts/brightness", 10000},
+    {"~/.config/swayblocks/scripts/wifi", 5000},
+    {"~/.config/swayblocks/scripts/volume", 5000, "~/.config/swayblocks/scripts/click/volctrl"},
+    {"~/.config/swayblocks/scripts/cmus", 5000, "~/.config/swayblocks/scripts/click/pause"}
+  ]
+```
+
+##### Blocks
+For scripts for blocks, make sure the output is in the format `key:value///key:value\n` where key is something from the [i3bar protocol](https://i3wm.org/docs/i3bar-protocol.html) and value is what you want it to be.
 
 For example:
 ```bash
@@ -20,75 +48,31 @@ echo -n "full_text:$(date)///" # using -n flag so there's no newline
 echo "color:#fffff" # here's a new line
 
 echo -n "full_text:another block nani???///" # you can have one script output multiple blocks
-echo -n "border:#123456///" # mainly so they can use different borders
-echo "color:#ff0000" # or colors
+echo "border:#123456///color:#ff0000" # mainly so they can use different borders or colors
 
 echo "full_text:if you really wanted///short_text:it could be on the same line"
 ```
 
-Read the [i3bar protocol](https://i3wm.org/docs/i3bar-protocol.html) for information on how to customize
-your blocks.
-
-Once you've created your script files, go into `mix.exs` make a tuple for each script. Tuples are in the 
-form `{script, timer, click_script}` where `click_script` is optional. The timer can be as high as you 
-want it to be, but know that the bar will always be drawn after at most 999999 milliseconds because that's
-the number I put in the code and not like Infinity.
-```exs
-  def application do
-    [
-      mod:
-        {SwayBlocks,
-         [
-           {:"scripts/date", 1000},
-           {:"scripts/battery", 30000},
-           {:"scripts/brightness", 10000},
-           {:"scripts/wifi", 5000},
-           {:"scripts/volume", 5000, :"scripts/click/volctrl"},
-           {:"scripts/cmus", 5000, :"scripts/click/pause"}
-         ]},
-      extra_applications: [:logger]
-    ]
-  end
-```
-Also you can update the scripts and they'll be used as long as they were loaded in the beginning.
-
 ##### Click Events
 When you click a block, it will automatically update itself. Also, if you put a `click_script`, it will be
-executed. It will be executed like `./your/script somejsonstring`. The json string will be the click event
-that is sent by the bar, you can find the structure at the bottom of the [i3bar protocol](https://i3wm.org/docs/i3bar-protocol.html). 
+executed. It will be executed like `./your/script somestring`. The string will be the click event
+that is sent by the bar; you can find the structure at the bottom of the [i3bar protocol](https://i3wm.org/docs/i3bar-protocol.html). 
 
-If you take a look at the sample script [volctrl](https://github.com/rei2hu/swayblocks/blob/master/scripts/click/volctrl), you will see 
+Here's an example of the passed info from `swaybar`, you probably notice it's missing some things that i3 has.
+It doesn't really matter because it's up to your script to handle it.
+```
+{"y":16,"x":1121,"name":"/home/rmu/.config/swayblocks/scripts/volume","button":1}
+```
+For example, if you take a look at the sample script [volctrl](https://github.com/rei2hu/swayblocks/blob/master/scripts/click/volctrl), you will see that it reads parses the json and executes an action based on the button.
 ```js
-    const clickInfo = JSON.parse(process.argv[2]);
-    const { execSync } = require('child_process');
+    // ...
     switch (clickInfo.button) {
-
         case 1: // primary
             execSync('amixer set Master 10%+')
     // ...
 ```
-1. It's written in node.js instead of bash and it works
-2. It parses the passed string and uses that to determine what command to run
 
 ##### Screenshot
 This is how it looks with the packaged scripts... assuming they work for you
 ![a picture of the bar](https://i.imgur.com/46pFMLg.png)
 Music not included, using xos4 Terminus for the font
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `sway_blocks` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:sway_blocks, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/sway_blocks](https://hexdocs.pm/sway_blocks).
-
