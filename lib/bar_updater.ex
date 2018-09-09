@@ -11,8 +11,8 @@ defmodule Updater do
       files
       |> Enum.map(fn x ->
         case x do
-          {a, b} -> {a, b, nil}
-          {a, b, c} -> {a, b, c}
+          {a, b} -> {Path.expand(a), b, nil}
+          {a, b, c} -> {Path.expand(a), b, Path.expand(c)}
         end
       end)
       |> Enum.map_reduce(%{}, fn x, acc ->
@@ -38,7 +38,6 @@ defmodule Updater do
 
   defp handle_click(files, clickmap) do
     key = clickmap["name"]
-    key = String.to_atom(key)
     %{^key => map} = files
 
     case map[:click] do
@@ -47,7 +46,7 @@ defmodule Updater do
 
       script ->
         {:ok, str} = Poison.encode(clickmap)
-        System.cmd(System.cwd() <> "/" <> Atom.to_string(script), [str])
+        System.cmd(script, [str])
     end
 
     Task.await(update_contents(key))

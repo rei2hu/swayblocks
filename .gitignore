@@ -23,3 +23,4 @@ erl_crash.dump
 sway_status-*.tar
 
 /scripts/test
+swayblocks

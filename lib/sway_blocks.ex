@@ -1,7 +1,9 @@
 defmodule SwayBlocks do
   use Application
 
-  def start(_type, args) do
+  def start(_type, _args) do
+    args = Application.get_env(:SwayBlocks, :args, [])
+
     [
       %{
         id: :Updater,
@@ -15,11 +17,6 @@ defmodule SwayBlocks do
     |> Supervisor.start_link(strategy: :one_for_one)
   end
 
-  def prep_stop(_state) do
-    IO.puts("bye!")
-  end
-
-  def update(pid) do
-    GenServer.call(pid, :update)
+  def main(_) do
   end
 end
