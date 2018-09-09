@@ -23,20 +23,19 @@ your `status_command` should be set to.
 Available through the [AUR](https://aur.archlinux.org/packages/swayblocks/)
 
 ##### config.exs
-In the config file, you will find this; an array of tuples. The first entry in the tuple is the block script,
-the second entry in the tuple is the time to update it, and the third entry in the tuple (optional) is the script
+In the config file, you will find an array of tuples. The first entry in each tuple is the block script,
+the second entry is the time to update it, and the third entry (optional) is the script
 to run when the block is clicked. Feel free to add or delete from here as you please.
 
 ```elixir
-config :SwayBlocks,
-  args: [
-    {"~/.config/swayblocks/scripts/date", 1000},
-    {"~/.config/swayblocks/scripts/battery", 30000},
-    {"~/.config/swayblocks/scripts/brightness", 10000},
-    {"~/.config/swayblocks/scripts/wifi", 5000},
-    {"~/.config/swayblocks/scripts/volume", 5000, "~/.config/swayblocks/scripts/click/volctrl"},
-    {"~/.config/swayblocks/scripts/cmus", 5000, "~/.config/swayblocks/scripts/click/pause"}
-  ]
+[
+  {"~/.config/swayblocks/scripts/date", 1000},
+  {"~/.config/swayblocks/scripts/battery", 30000},
+  {"~/.config/swayblocks/scripts/brightness", 10000},
+  {"~/.config/swayblocks/scripts/wifi", 5000},
+  {"~/.config/swayblocks/scripts/volume", 5000, "~/.config/swayblocks/scripts/click/volctrl"},
+  {"~/.config/swayblocks/scripts/cmus", 5000, "~/.config/swayblocks/scripts/click/pause"}
+]
 ```
 
 ##### Blocks
@@ -65,7 +64,7 @@ It doesn't really matter because it's up to your script to handle it.
 ```
 {"y":16,"x":1121,"name":"/home/rmu/.config/swayblocks/scripts/volume","button":1}
 ```
-For example, if you take a look at the sample script [volctrl](https://github.com/rei2hu/swayblocks/blob/master/scripts/click/volctrl), you will see that it reads parses the json and executes an action based on the button.
+For example, if you take a look at the sample script [volctrl](https://github.com/rei2hu/swayblocks/blob/master/scripts/click/volctrl), you will see that it parses the json and executes an action based on the button.
 ```js
     // ...
     switch (clickInfo.button) {
