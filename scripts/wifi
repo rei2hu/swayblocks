@@ -28,7 +28,7 @@ SIGNAL_INFO="📶 $SIGNAL_STR"
 if [[ ! $LOCAL_IP == 127* ]]; then
 	COLOR="#44ff44"
 fi
-if ip addr | grep tun; then
+if [ "$(ip addr | grep tun)" != "" ]; then
 	VPN_COLOR="#aaaa00"
 	VPN_STATUS=" 😎"
 fi
