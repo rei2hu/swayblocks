@@ -1,36 +1,4 @@
 defmodule BlockWatcher do
-  use GenServer
-
-  def start_link(block) do
-    GenServer.start_link(__MODULE__, block, name: block)
-  end
-
-  @impl true
-  def init(block) do
-    # get first setup
-    state =
-      %{:name => block, :blocks => []}
-      |> update
-
-    {:ok, state}
-  end
-
-  @impl true
-  def handle_call(:update, _from, state) do
-    case newstate = update(state) do
-      :err ->
-        {:reply, :err, newstate}
-
-      _ ->
-        {:reply, newstate, newstate}
-    end
-  end
-
-  @impl true
-  def handle_call(:get, _from, state) do
-    {:reply, state, state}
-  end
-
   def update(name) do
     {blocks, 0} = System.cmd(name, [])
 

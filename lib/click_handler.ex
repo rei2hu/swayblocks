@@ -19,8 +19,7 @@ defmodule Clicks do
     IO.gets("")
     |> Poison.decode()
     |> handle_click(files)
-
-    listen_for_clicks(files)
+    |> listen_for_clicks
   end
 
   defp handle_click(json, files) do
