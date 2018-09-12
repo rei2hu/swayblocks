@@ -7,7 +7,7 @@ defmodule Updater do
 
   @impl true
   def init(files) do
-    files =
+    state =
       files
       |> Enum.map(fn x ->
         case x do
@@ -23,14 +23,14 @@ defmodule Updater do
 
     send(self(), :start)
 
-    {:ok, files}
+    {:ok, state}
   end
 
   @impl true
   def handle_call({:click, clickmap}, _from, state) do
     {order, files} = state
 
-    handle_click(files, clickmap)
+    files = handle_click(files, clickmap)
     send(self(), {:checkupdate, 0, false})
 
     {:reply, :ok, {order, files}}
@@ -42,19 +42,17 @@ defmodule Updater do
 
     case map[:click] do
       nil ->
-        nil
+        files
 
       script ->
         {:ok, str} = Poison.encode(clickmap)
         System.cmd(script, [str])
+        Map.put(files, key, Map.put(map, :left, 0))
     end
-
-    Task.await(update_contents(key))
   end
 
   defp update_contents(file) do
-    parent = self()
-    Task.async(fn -> send(parent, {:update, file, BlockWatcher.update(file)}) end)
+    Task.async(fn -> {file, BlockWatcher.update(file)} end)
   end
 
   @impl true
@@ -62,14 +60,6 @@ defmodule Updater do
     IO.puts("{\"version\":1,\"click_events\":true}")
     IO.puts("[")
     send(self(), {:checkupdate, 0, true})
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info({:update, file, content}, state) do
-    {order, files} = state
-    %{^file => map} = files
-    state = {order, Map.put(files, file, Map.put(map, :content, content))}
     {:noreply, state}
   end
 
@@ -94,12 +84,18 @@ defmodule Updater do
         end
       end)
 
-    tasks
-    |> Enum.map(&Task.await/1)
+    files =
+      tasks
+      |> Enum.map(&Task.await/1)
+      |> Enum.into(files, fn {file, content} ->
+        %{^file => map} = files
+        {file, Map.put(map, :content, content)}
+      end)
+
+    send_blocks(files, order)
 
     if loop do
       files
-      |> send_blocks(order)
       |> get_minimum_time
       |> wait_for_time
     end
@@ -119,10 +115,10 @@ defmodule Updater do
     end)
   end
 
-  defp send_blocks(state, order) do
+  defp send_blocks(files, order) do
     order
     |> Enum.reduce([], fn x, acc ->
-      %{^x => %{:content => content}} = state
+      %{^x => %{:content => content}} = files
 
       case content do
         nil ->
@@ -135,6 +131,6 @@ defmodule Updater do
     |> Enum.join(",")
     |> (&IO.puts("[" <> &1 <> "]")).()
 
-    state
+    files
   end
 end
