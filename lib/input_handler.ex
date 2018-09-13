@@ -27,7 +27,6 @@ defmodule Input do
       {:ok, map} ->
         case map["button"] do
           nil ->
-            # handle custom things
             :ok = GenServer.call(:Updater, {:custom, map})
 
           _ ->

@@ -32,9 +32,7 @@ defmodule Updater do
   end
 
   @impl true
-  def handle_call({:click, clickmap}, _from, state) do
-    {order, files} = state
-
+  def handle_call({:click, clickmap}, _from, {order, files}) do
     files = handle_click(files, clickmap)
     send(self(), {:checkupdate, 0, false})
 
@@ -43,42 +41,34 @@ defmodule Updater do
 
   @impl true
   def handle_call({:custom, json}, _from, {order, files}) do
-    key = json["name"]
+    %{"name" => key, "action" => action} = json
     %{^key => map} = files
 
     files =
-      case json["action"] do
+      case action do
         "update" ->
-          send(self(), {:checkupdate, 0, false})
-          Map.put(files, json["name"], Map.put(map, :left, 0))
+          Map.put(files, key, Map.put(map, :left, 0))
 
         "enable" ->
-          Map.put(files, json["name"], Map.put(map, :status, 1))
+          Map.put(files, key, Map.put(map, :status, 1))
 
         "disable" ->
-          Map.put(files, json["name"], Map.put(map, :status, 0))
+          Map.put(files, key, Map.put(map, :status, 0))
+
+        "set" ->
+          Map.put(
+            files,
+            key,
+            Map.put(map, String.to_atom(json["key"]), json["value"])
+          )
 
         _ ->
           files
       end
 
+    send(self(), {:checkupdate, 0, false})
+
     {:reply, :ok, {order, files}}
-  end
-
-  defp handle_click(files, clickmap) do
-    key = clickmap["name"]
-    %{^key => map} = files
-
-    case map[:click] do
-      nil ->
-        files
-
-      script ->
-        {:ok, str} = Poison.encode(clickmap)
-        System.cmd(Path.expand(script), [str])
-    end
-
-    Map.put(files, key, Map.put(map, :left, 0))
   end
 
   @impl true
@@ -90,9 +80,7 @@ defmodule Updater do
   end
 
   @impl true
-  def handle_info({:checkupdate, time, loop}, state) do
-    {order, files} = state
-
+  def handle_info({:checkupdate, time, loop}, {order, files}) do
     {tasks, files} =
       files
       |> Enum.reduce({[], %{}}, fn x, acc ->
@@ -123,18 +111,30 @@ defmodule Updater do
     if loop do
       files
       |> get_minimum_time
-      |> wait_for_time
+      |> (&Process.send_after(self(), {:checkupdate, &1, true}, &1)).()
     end
 
     {:noreply, {order, files}}
   end
 
-  defp update_contents(file) do
-    Task.async(fn -> {file, BlockWatcher.update(file)} end)
+  defp handle_click(files, clickmap) do
+    key = clickmap["name"]
+    %{^key => map} = files
+
+    case map[:click] do
+      nil ->
+        files
+
+      script ->
+        {:ok, str} = Poison.encode(clickmap)
+        System.cmd(Path.expand(script), [str])
+    end
+
+    Map.put(files, key, Map.put(map, :left, 0))
   end
 
-  defp wait_for_time(time) do
-    Process.send_after(self(), {:checkupdate, time, true}, time)
+  defp update_contents(file) do
+    Task.async(fn -> {file, BlockWatcher.update(file)} end)
   end
 
   defp get_minimum_time(state) do
