@@ -10,7 +10,7 @@ defmodule Clicks do
           acc
       end
     end)
-    |> listen_for_clicks
+    |> (&Task.async(fn -> listen_for_clicks(&1) end)).()
 
     {:ok, self()}
   end

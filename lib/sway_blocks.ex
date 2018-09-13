@@ -18,5 +18,6 @@ defmodule SwayBlocks do
   end
 
   def main(_) do
+    :timer.sleep(:infinity)
   end
 end
