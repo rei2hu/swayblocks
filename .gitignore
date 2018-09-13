@@ -24,3 +24,4 @@ sway_status-*.tar
 
 /scripts/test
 swayblocks
+.formatter.exs
