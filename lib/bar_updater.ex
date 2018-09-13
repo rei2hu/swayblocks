@@ -9,16 +9,21 @@ defmodule Updater do
   def init(files) do
     state =
       files
-      |> Enum.map(fn x ->
-        case x do
-          {a, b} -> {Path.expand(a), b, nil}
-          {a, b, c} -> {Path.expand(a), b, Path.expand(c)}
-        end
-      end)
       |> Enum.map_reduce(%{}, fn x, acc ->
-        {name, time, click} = x
+        %{:name => name} = x
 
-        {name, Map.put(acc, name, %{:click => click, :time => time, :left => 0, :content => nil})}
+        {name,
+         Map.put(
+           acc,
+           name,
+           Enum.into(x, %{
+             :click => nil,
+             :time => 999_999,
+             :left => 0,
+             :content => nil,
+             :status => 1
+           })
+         )}
       end)
 
     send(self(), :start)
@@ -36,6 +41,30 @@ defmodule Updater do
     {:reply, :ok, {order, files}}
   end
 
+  @impl true
+  def handle_call({:custom, json}, _from, {order, files}) do
+    key = json["name"]
+    %{^key => map} = files
+
+    files =
+      case json["action"] do
+        "update" ->
+          send(self(), {:checkupdate, 0, false})
+          Map.put(files, json["name"], Map.put(map, :left, 0))
+
+        "enable" ->
+          Map.put(files, json["name"], Map.put(map, :status, 1))
+
+        "disable" ->
+          Map.put(files, json["name"], Map.put(map, :status, 0))
+
+        _ ->
+          files
+      end
+
+    {:reply, :ok, {order, files}}
+  end
+
   defp handle_click(files, clickmap) do
     key = clickmap["name"]
     %{^key => map} = files
@@ -46,13 +75,10 @@ defmodule Updater do
 
       script ->
         {:ok, str} = Poison.encode(clickmap)
-        System.cmd(script, [str])
-        Map.put(files, key, Map.put(map, :left, 0))
+        System.cmd(Path.expand(script), [str])
     end
-  end
 
-  defp update_contents(file) do
-    Task.async(fn -> {file, BlockWatcher.update(file)} end)
+    Map.put(files, key, Map.put(map, :left, 0))
   end
 
   @impl true
@@ -72,11 +98,11 @@ defmodule Updater do
       |> Enum.reduce({[], %{}}, fn x, acc ->
         {list, map} = acc
         {name, map2} = x
-        %{:time => refresh, :left => left} = map2
+        %{:time => refresh, :left => left, :status => status} = map2
         newtime = left - time
 
         cond do
-          newtime <= 0 ->
+          newtime <= 0 && status == 1 ->
             {[update_contents(name) | list], Map.put(map, name, Map.put(map2, :left, refresh))}
 
           true ->
@@ -101,6 +127,10 @@ defmodule Updater do
     end
 
     {:noreply, {order, files}}
+  end
+
+  defp update_contents(file) do
+    Task.async(fn -> {file, BlockWatcher.update(file)} end)
   end
 
   defp wait_for_time(time) do

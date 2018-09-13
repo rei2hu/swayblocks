@@ -10,8 +10,8 @@ defmodule SwayBlocks do
         start: {Updater, :start_link, [args]}
       },
       %{
-        id: :Clicks,
-        start: {Clicks, :start_link, [args]}
+        id: :Input,
+        start: {Input, :start_link, [args]}
       }
     ]
     |> Supervisor.start_link(strategy: :one_for_one)

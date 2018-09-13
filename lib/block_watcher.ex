@@ -1,6 +1,6 @@
 defmodule BlockWatcher do
   def update(name) do
-    {blocks, 0} = System.cmd(name, [])
+    {blocks, 0} = System.cmd(Path.expand(name), [])
 
     blocks
     |> String.split("\n")
