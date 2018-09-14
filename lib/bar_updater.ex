@@ -93,8 +93,29 @@ defmodule Updater do
           newtime <= 0 && status == 1 ->
             {[update_contents(name) | list], Map.put(map, name, Map.put(map2, :left, refresh))}
 
-          true ->
-            {list, Map.put(map, name, Map.put(map2, :left, newtime))}
+          status == 1 ->
+            {list,
+             Map.put(
+               map,
+               name,
+               Map.put(
+                 map2,
+                 :left,
+                 newtime
+               )
+             )}
+
+          status == 0 ->
+            {list,
+             Map.put(
+               map,
+               name,
+               Map.put(
+                 map2,
+                 :left,
+                 refresh
+               )
+             )}
         end
       end)
 
@@ -140,8 +161,15 @@ defmodule Updater do
   defp get_minimum_time(state) do
     state
     |> Enum.reduce(999_999, fn x, acc ->
-      {_, %{:left => left}} = x
-      min(left, acc)
+      {_, %{:left => left, :status => status}} = x
+
+      case status do
+        1 ->
+          min(left, acc)
+
+        _ ->
+          acc
+      end
     end)
   end
 
