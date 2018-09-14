@@ -36,16 +36,31 @@ bar {
 ```
 
 ### Config
-In the `~/.config/swayblocks/config.exs` file, you will find a list of maps. The following keys are used to customize
-the behaviour of each block. Only `name` is necessary. The defaults for the other keys are shown below:
+In the `~/.config/swayblocks/config.exs` ([config.exs](https://github.com/rei2hu/swayblocks/blob/master/config.exs)) file, 
+you will find a list of maps. The following keys are used to customize the behaviour of each block. Only `name` is
+necessary. The defaults for the other keys are shown below:
 ```elixir
 %{
   :name => "~/some/path", # the script that determines the block's appearance
   :time => 999_999, # the time this block will refresh in
   :click => nil, # the script that will be run when the block is clicked
-  :status => 1 # whether or not this block is updating, 1 means enabled
+  :status => 1, # whether or not this block is updating, 1 means enabled
+  :default => %{} # the default options to apply to each block
 }
 ```
+
+##### Defaults
+The default is a map where properties will be pulled from if they are not output from the script. For example with
+```exs
+:name => "~/some/script",
+:default => %{
+  "full_text" => "bottom text",
+  "color" => "#ff0000"
+}
+```
+If some script does not output anything for `full_text` or `color`, those values will end up being what is defined in
+`:default`; in this case "bottom text" and red, respectively. The default is applied to all blocks that are output
+from the named script.
 
 ### Blocks
 For scripts for blocks, make sure the output is in the format `key:value///key:value\n` where key is
