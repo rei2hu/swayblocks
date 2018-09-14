@@ -34,7 +34,7 @@ defmodule Updater do
              :click => nil,
              :time => 999_999,
              :left => 0,
-             :content => nil,
+             :content => [],
              :status => 1
            })
          )}
@@ -64,8 +64,7 @@ defmodule Updater do
   Returns `:ok`
   """
   @impl true
-  def handle_call({:custom, json}, _from, {order, files}) do
-    %{"name" => key, "action" => action} = json
+  def handle_call({:custom, %{"name" => key, "action" => action} = json}, _from, {order, files}) do
     %{^key => map} = files
 
     files =
@@ -113,10 +112,9 @@ defmodule Updater do
   def handle_info({:checkupdate, time, loop}, {order, files}) do
     {tasks, files} =
       files
-      |> Enum.reduce({[], %{}}, fn x, acc ->
-        {list, map} = acc
-        {name, map2} = x
-        %{:time => refresh, :left => left, :status => status} = map2
+      |> Enum.reduce({[], %{}}, fn {name,
+                                    %{:time => refresh, :left => left, :status => status} = map2},
+                                   {list, map} ->
         newtime = left - time
 
         cond do
@@ -146,6 +144,9 @@ defmodule Updater do
                  refresh
                )
              )}
+
+          true ->
+            {list, map}
         end
       end)
 
@@ -168,8 +169,7 @@ defmodule Updater do
     {:noreply, {order, files}}
   end
 
-  defp handle_click(files, clickmap) do
-    key = clickmap["name"]
+  defp handle_click(files, %{"name" => key} = clickmap) do
     %{^key => map} = files
 
     case map[:click] do

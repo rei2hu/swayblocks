@@ -37,7 +37,7 @@ defmodule BlockWatcher do
           Map.put(acc, key, value)
 
         _ ->
-          nil
+          acc
       end
     end)
     |> Map.put("name", name)

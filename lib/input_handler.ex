@@ -23,13 +23,16 @@ defmodule Input do
 
   defp handle_input(json) do
     case json do
-      {:ok, map} ->
-        case map["button"] do
-          nil ->
+      {:ok, %{"name" => _} = map} ->
+        cond do
+          map["button"] != nil ->
+            :ok = GenServer.call(:Updater, {:click, map})
+
+          map["action"] != nil ->
             :ok = GenServer.call(:Updater, {:custom, map})
 
-          _ ->
-            :ok = GenServer.call(:Updater, {:click, map})
+          true ->
+            nil
         end
 
       _ ->
