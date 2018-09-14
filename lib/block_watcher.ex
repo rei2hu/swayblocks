@@ -8,28 +8,28 @@ defmodule BlockWatcher do
 
   Returns list_of_maps
   """
-  def update(name) do
+  def update(name, default) do
     {blocks, 0} = System.cmd(Path.expand(name), [])
 
     blocks
     |> String.split("\n")
-    |> handle_blocks(name)
+    |> handle_blocks(name, default)
   end
 
-  defp handle_blocks(list, name) do
+  defp handle_blocks(list, name, default) do
     case list do
       [] ->
         []
 
       [head | tail] when head !== "" ->
-        [handle_block(head, name) | handle_blocks(tail, name)]
+        [handle_block(head, name, default) | handle_blocks(tail, name, default)]
 
       [_ | tail] ->
-        handle_blocks(tail, name)
+        handle_blocks(tail, name, default)
     end
   end
 
-  defp handle_block(list, name) do
+  defp handle_block(list, name, default) do
     String.split(list, "///")
     |> Enum.reduce(%{}, fn e, acc ->
       case String.split(e, ":", parts: 2) do
@@ -41,6 +41,7 @@ defmodule BlockWatcher do
       end
     end)
     |> Map.put("name", name)
+    |> Enum.into(default)
     |> Poison.encode()
     |> check_output
   end

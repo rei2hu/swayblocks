@@ -1,5 +1,3 @@
 #!/bin/bash
 
-echo -n "full_text:$(date '+%a %b %d, %Y %R:%S')///"
-echo -n "color:#ff44ff///"
-echo "separator_block_width:25"
+echo "full_text:$(date '+%a %b %d, %Y %R:%S')"

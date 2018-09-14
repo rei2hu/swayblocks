@@ -9,6 +9,4 @@ else
 	VOL_ICON="🔊"
 fi
 
-echo -n "full_text:$VOL_ICON $VOLUME///"
-echo "separator_block_width:25"
-
+echo "full_text:$VOL_ICON $VOLUME"

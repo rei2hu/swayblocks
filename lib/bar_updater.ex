@@ -35,7 +35,8 @@ defmodule Updater do
              :time => 999_999,
              :left => 0,
              :content => [],
-             :status => 1
+             :status => 1,
+             :default => %{}
            })
          )}
       end)
@@ -113,13 +114,19 @@ defmodule Updater do
     {tasks, files} =
       files
       |> Enum.reduce({[], %{}}, fn {name,
-                                    %{:time => refresh, :left => left, :status => status} = map2},
+                                    %{
+                                      :time => refresh,
+                                      :left => left,
+                                      :status => status,
+                                      :default => default
+                                    } = map2},
                                    {list, map} ->
         newtime = left - time
 
         cond do
           newtime <= 0 && status == 1 ->
-            {[update_contents(name) | list], Map.put(map, name, Map.put(map2, :left, refresh))}
+            {[update_contents(name, default) | list],
+             Map.put(map, name, Map.put(map2, :left, refresh))}
 
           status == 1 ->
             {list,
@@ -184,8 +191,8 @@ defmodule Updater do
     Map.put(files, key, Map.put(map, :left, 0))
   end
 
-  defp update_contents(file) do
-    Task.async(fn -> {file, BlockWatcher.update(file)} end)
+  defp update_contents(file, default) do
+    Task.async(fn -> {file, BlockWatcher.update(file, default)} end)
   end
 
   defp get_minimum_time(state) do

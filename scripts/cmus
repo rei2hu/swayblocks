@@ -23,14 +23,10 @@ if [[ ! $INFO == "" ]]; then
 		MUSIC_INFO="♬ $(echo -n "[$MUSIC_INFO]" | sed -z 's/\n/ - /g')"
 	fi
 	TIME_INFO="$(sec_display $POSITION)/$(sec_display $DURATION) $STATUS_ICON"
-	MUSIC_COLOR="#44ffff"
 fi
 
 echo -n "full_text:$MUSIC_INFO///"
 echo -n "separator:false///"
-echo -n "separator_block_width:10///"
-echo "color:$MUSIC_COLOR"
+echo "separator_block_width:10"
 
-echo -n "full_text:$TIME_INFO///"
-echo -n "separator_block_width:25///"
-echo "color:$MUSIC_COLOR"
+echo "full_text:$TIME_INFO"

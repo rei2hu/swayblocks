@@ -42,5 +42,4 @@ echo "separator:$CONNECTED"
 
 echo -n "full_text:$SIGNAL_INFO///"
 echo -n "color:$SIGNAL_COLOR///"
-echo -n "border:$VPN_COLOR///"
-echo "separator_block_width:25"
+echo "border:$VPN_COLOR"
