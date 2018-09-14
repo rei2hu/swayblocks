@@ -1,28 +1,27 @@
 defmodule Input do
-  def start_link(args) do
-    args
-    |> Enum.reduce(%{}, fn x, acc ->
-      case x do
-        {name, _, click_event} ->
-          Map.put(acc, name, click_event)
+  @moduledoc """
+  This handles things from stdin
+  """
 
-        _ ->
-          acc
-      end
-    end)
-    |> (&Task.async(fn -> listen_for_input(&1) end)).()
+  @doc """
+  Starts the endless listening loop
+
+  Returns `{:ok, pid}`
+  """
+  def start_link(_) do
+    Task.async(fn -> listen_for_input(nil) end)
 
     {:ok, self()}
   end
 
-  defp listen_for_input(files) do
+  defp listen_for_input(_) do
     IO.gets("")
     |> Poison.decode()
-    |> handle_input(files)
+    |> handle_input
     |> listen_for_input
   end
 
-  defp handle_input(json, files) do
+  defp handle_input(json) do
     case json do
       {:ok, map} ->
         case map["button"] do
@@ -36,7 +35,5 @@ defmodule Input do
       _ ->
         nil
     end
-
-    files
   end
 end

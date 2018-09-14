@@ -1,10 +1,24 @@
 defmodule Updater do
   use GenServer
 
+  @moduledoc """
+  The module that handles everything
+  """
+
+  @doc """
+  Starts a GenServer which will handle requests
+
+  Returns `{:ok, pid}`
+  """
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: :Updater)
   end
 
+  @doc """
+  Sets up state
+
+  Returns `{:ok, state}`
+  """
   @impl true
   def init(files) do
     state =
@@ -31,6 +45,11 @@ defmodule Updater do
     {:ok, state}
   end
 
+  @doc """
+  Handles a click
+
+  Returns `:ok`
+  """
   @impl true
   def handle_call({:click, clickmap}, _from, {order, files}) do
     files = handle_click(files, clickmap)
@@ -39,6 +58,11 @@ defmodule Updater do
     {:reply, :ok, {order, files}}
   end
 
+  @doc """
+  Handles a custom even
+
+  Returns `:ok`
+  """
   @impl true
   def handle_call({:custom, json}, _from, {order, files}) do
     %{"name" => key, "action" => action} = json
@@ -71,6 +95,9 @@ defmodule Updater do
     {:reply, :ok, {order, files}}
   end
 
+  @doc """
+  The start callback really. Starts a loop for timing updates
+  """
   @impl true
   def handle_info(:start, state) do
     IO.puts("{\"version\":1,\"click_events\":true}")
@@ -79,6 +106,9 @@ defmodule Updater do
     {:noreply, state}
   end
 
+  @doc """
+  Callback to update blocks
+  """
   @impl true
   def handle_info({:checkupdate, time, loop}, {order, files}) do
     {tasks, files} =
