@@ -121,14 +121,19 @@ defmodule Updater do
                                       :default => default
                                     } = map2},
                                    {list, map} ->
-        newtime = left - time
+        newtime =
+          if status == 1 do
+            left - time
+          else
+            left
+          end
 
         cond do
-          newtime <= 0 && status == 1 ->
+          newtime <= 0 ->
             {[update_contents(name, default) | list],
              Map.put(map, name, Map.put(map2, :left, refresh))}
 
-          status == 1 ->
+          true ->
             {list,
              Map.put(
                map,
@@ -139,21 +144,6 @@ defmodule Updater do
                  newtime
                )
              )}
-
-          status == 0 ->
-            {list,
-             Map.put(
-               map,
-               name,
-               Map.put(
-                 map2,
-                 :left,
-                 refresh
-               )
-             )}
-
-          true ->
-            {list, map}
         end
       end)
 
