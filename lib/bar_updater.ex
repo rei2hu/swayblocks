@@ -214,7 +214,7 @@ defmodule Updater do
       end
     end)
     |> Enum.join(",")
-    |> (&IO.puts("[" <> &1 <> "]")).()
+    |> (&IO.puts("[" <> &1 <> "],")).()
 
     files
   end
