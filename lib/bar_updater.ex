@@ -71,6 +71,7 @@ defmodule Updater do
     files =
       case action do
         "update" ->
+          send(self(), {:checkupdate, 0, false})
           Map.put(files, key, Map.put(map, :left, 0))
 
         "enable" ->
@@ -89,8 +90,6 @@ defmodule Updater do
         _ ->
           files
       end
-
-    send(self(), {:checkupdate, 0, false})
 
     {:reply, :ok, {order, files}}
   end
