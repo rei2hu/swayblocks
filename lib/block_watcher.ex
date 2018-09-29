@@ -13,23 +13,26 @@ defmodule BlockWatcher do
 
     blocks
     |> String.split("\n")
-    |> handle_blocks(name, default)
+    |> handle_blocks(name, default, 0)
   end
 
-  defp handle_blocks(list, name, default) do
+  defp handle_blocks(list, name, default, instance) do
     case list do
       [] ->
         []
 
       [head | tail] when head !== "" ->
-        [handle_block(head, name, default) | handle_blocks(tail, name, default)]
+        [
+          handle_block(head, name, default, instance)
+          | handle_blocks(tail, name, default, instance + 1)
+        ]
 
       [_ | tail] ->
-        handle_blocks(tail, name, default)
+        handle_blocks(tail, name, default, instance)
     end
   end
 
-  defp handle_block(list, name, default) do
+  defp handle_block(list, name, default, instance) do
     String.split(list, "///")
     |> Enum.reduce(%{}, fn e, acc ->
       case String.split(e, ":", parts: 2) do
@@ -41,6 +44,7 @@ defmodule BlockWatcher do
       end
     end)
     |> Map.put("name", name)
+    |> Map.put("instance", instance)
     |> Enum.into(default)
     |> Poison.encode()
     |> check_output
