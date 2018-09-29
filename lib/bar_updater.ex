@@ -87,6 +87,11 @@ defmodule Updater do
             Map.put(map, String.to_atom(json["key"]), json["value"])
           )
 
+        "setdefaultkey" ->
+          Map.put(map[:default], json["key"], json["value"])
+          |> (&Map.put(map, :default, &1)).()
+          |> (&Map.put(files, key, &1)).()
+
         _ ->
           files
       end
