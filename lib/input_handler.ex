@@ -9,16 +9,17 @@ defmodule Input do
   Returns `{:ok, pid}`
   """
   def start_link(_) do
-    Task.async(fn -> listen_for_input(nil) end)
+    Task.async(fn -> listen_for_input() end)
 
     {:ok, self()}
   end
 
-  defp listen_for_input(_) do
+  defp listen_for_input() do
     IO.gets("")
     |> Poison.decode()
     |> handle_input
-    |> listen_for_input
+
+    listen_for_input()
   end
 
   defp handle_input(json) do

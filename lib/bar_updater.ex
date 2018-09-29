@@ -72,20 +72,23 @@ defmodule Updater do
       case action do
         "update" ->
           send(self(), {:checkupdate, 0, false})
-          Map.put(files, key, Map.put(map, :left, 0))
+
+          Map.put(map, :left, 0)
+          |> (&Map.put(files, key, &1)).()
 
         "enable" ->
-          Map.put(files, key, Map.put(map, :status, 1))
+          Map.put(map, :status, 1)
+          |> (&Map.put(files, key, &1)).()
 
         "disable" ->
-          Map.put(files, key, Map.put(map, :status, 0))
+          Map.put(map, :status, 0)
+          |> (&Map.put(files, key, &1)).()
 
         "set" ->
-          Map.put(
-            files,
-            key,
-            Map.put(map, String.to_atom(json["key"]), json["value"])
-          )
+          json["key"]
+          |> String.to_atom()
+          |> (&Map.put(map, &1, json["value"])).()
+          |> (&Map.put(files, key, &1)).()
 
         "setdefaultkey" ->
           Map.put(map[:default], json["key"], json["value"])
