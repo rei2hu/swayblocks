@@ -16,6 +16,7 @@ defmodule Input do
 
   defp listen_for_input() do
     IO.gets("")
+    |> String.replace_prefix(",", "")
     |> String.replace_suffix(",\n", "")
     |> Poison.decode()
     |> handle_input
