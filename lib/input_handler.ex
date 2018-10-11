@@ -8,7 +8,7 @@ defmodule Input do
 
   Returns `{:ok, pid}`
   """
-  def start_link(_) do
+  def start_link() do
     Task.async(fn -> listen_for_input() end)
 
     {:ok, self()}

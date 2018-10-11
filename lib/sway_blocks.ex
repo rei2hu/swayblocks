@@ -13,17 +13,8 @@ defmodule SwayBlocks do
   def start(_type, _args) do
     {args, _} = Code.eval_file(Path.expand("~/.config/swayblocks/config.exs"))
 
-    [
-      %{
-        id: :Updater,
-        start: {Updater, :start_link, [args]}
-      },
-      %{
-        id: :Input,
-        start: {Input, :start_link, [args]}
-      }
-    ]
-    |> Supervisor.start_link(strategy: :one_for_one)
+    {:ok, _} = Updater.start_link(args)
+    {:ok, _} = Input.start_link()
   end
 
   @doc """

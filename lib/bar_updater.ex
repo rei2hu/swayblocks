@@ -34,7 +34,7 @@ defmodule Updater do
              :click => nil,
              :time => 999_999,
              :left => 0,
-             :content => [],
+             :content => "",
              :status => 1,
              :default => %{}
            })
@@ -106,11 +106,11 @@ defmodule Updater do
   The start callback really. Starts a loop for timing updates
   """
   @impl true
-  def handle_info(:start, state) do
+  def handle_info(:start, {order, files}) do
     IO.puts("{\"version\":1,\"click_events\":true}")
     IO.puts("[")
     send(self(), {:checkupdate, 0, true})
-    {:noreply, state}
+    {:noreply, {Enum.reverse(order), files}}
   end
 
   @doc """
@@ -159,6 +159,16 @@ defmodule Updater do
       |> Enum.map(&Task.await/1)
       |> Enum.into(files, fn {file, content} ->
         %{^file => map} = files
+
+        content =
+          case content do
+            nil ->
+              ""
+
+            _ ->
+              Enum.join(content, ",")
+          end
+
         {file, Map.put(map, :content, content)}
       end)
 
@@ -209,20 +219,10 @@ defmodule Updater do
 
   defp send_blocks(files, order) do
     order
-    |> Enum.reduce([], fn x, acc ->
+    |> Enum.map_join(",", fn x ->
       %{^x => %{:content => content}} = files
-
-      case content do
-        nil ->
-          acc
-
-        _ ->
-          [Enum.join(content, ",") | acc]
-      end
+      content
     end)
-    |> Enum.join(",")
     |> (&IO.puts("[" <> &1 <> "],")).()
-
-    files
   end
 end
