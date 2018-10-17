@@ -156,20 +156,25 @@ defmodule Updater do
 
     files =
       tasks
-      |> Enum.map(&Task.await/1)
+      |> Enum.map(fn x ->
+        try do
+          Task.await(x)
+        catch
+          :exit, _ ->
+            {nil, nil}
+        end
+      end)
+      |> Enum.filter(fn {file, _} -> file != nil end)
       |> Enum.into(files, fn {file, content} ->
-        %{^file => map} = files
+        case content do
+          nil ->
+            {file, files[file]}
 
-        content =
-          case content do
-            nil ->
-              ""
-
-            _ ->
-              Enum.join(content, ",")
-          end
-
-        {file, Map.put(map, :content, content)}
+          _ ->
+            Enum.join(content, ",")
+            %{^file => map} = files
+            {file, Map.put(map, :content, content)}
+        end
       end)
 
     send_blocks(files, order)
@@ -178,6 +183,21 @@ defmodule Updater do
       files
       |> get_minimum_time
       |> (&Process.send_after(self(), {:checkupdate, &1, true}, &1)).()
+    end
+
+    {:noreply, {order, files}}
+  end
+
+  # if something lags behind it'll get updated eventually
+  def handle_info({_ref, {file, content}}, {order, files}) do
+    case content do
+      nil ->
+        {file, files[file]}
+
+      _ ->
+        Enum.join(content, ",")
+        %{^file => map} = files
+        {file, Map.put(map, :content, content)}
     end
 
     {:noreply, {order, files}}
