@@ -1,4 +1,4 @@
-defmodule BlockWatcher do
+defmodule BlockRunner do
   @moduledoc """
   Handles script output for blocks
   """

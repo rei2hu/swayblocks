@@ -1,46 +1,37 @@
-defmodule Input do
+defmodule InputHandler do
   @moduledoc """
   This handles things from stdin
   """
 
   @doc """
   Starts the endless listening loop
-
-  Returns `{:ok, pid}`
   """
-  def start_link() do
-    Task.async(fn -> listen_for_input() end)
-
-    {:ok, self()}
-  end
-
-  defp listen_for_input() do
+  def listen(event_loop_pid) do
     IO.gets("")
     |> String.replace_prefix(",", "")
     |> String.replace_suffix(",\n", "")
     |> Poison.decode()
-    |> handle_input
+    |> handle_input(event_loop_pid)
 
-    listen_for_input()
+    listen(event_loop_pid)
   end
 
-  defp handle_input(json) do
+  defp handle_input(json, pid) do
+    # json is already decoded,
+    # send this to the event loop
     case json do
       {:ok, %{"name" => _} = map} ->
-        try do
-          cond do
-            map["button"] != nil ->
-              :ok = GenServer.call(:Updater, {:click, map})
+        cond do
+          # send a :click event with the map variable
+          map["button"] != nil ->
+            send(pid, {:click, map})
 
-            map["action"] != nil ->
-              :ok = GenServer.call(:Updater, {:custom, map})
+          # send a :custom event with the map variable
+          map["action"] != nil ->
+            send(pid, {:custom, map})
 
-            true ->
-              nil
-          end
-        catch
-          # probably a timeout
-          :exit, _ -> nil
+          true ->
+            nil
         end
 
       _ ->
