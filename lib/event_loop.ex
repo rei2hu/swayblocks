@@ -1,5 +1,6 @@
 defmodule EventLoop do
   def start(settings) do
+    BlocksLogger.info("Starting swayblocks...")
     IO.puts("{\"version\":1,\"click_events\":true}")
     IO.puts("[")
 
@@ -35,18 +36,22 @@ defmodule EventLoop do
       receive do
         # handle click
         {:click, map} ->
+          BlocksLogger.info("Click message recieved #{inspect(map)}")
           handle_click(blocks, order, map)
 
         # handle custom
         {:custom, map} ->
+          BlocksLogger.info("Custom message recieved #{inspect(map)}")
           handle_custom(blocks, order, map)
 
         # handle a timed out script
         {_ref, {block, content}} ->
+          BlocksLogger.info("Timed out message recieved from #{block} #{inspect(content)}")
           late_update(blocks, block, content)
 
         # update self due to timer
         {:update, timeout} ->
+          BlocksLogger.info("Timer message recieved #{timeout}")
           update_self(blocks, order, timeout)
       end
 
@@ -109,6 +114,7 @@ defmodule EventLoop do
         put_in(blocks[blockname].default[map["key"]], map["value"])
 
       _unrecognized ->
+        BlocksLogger.warn("Unrecognized custom action: #{action}")
         blocks
     end
   end
@@ -118,15 +124,17 @@ defmodule EventLoop do
 
     case block[:click] do
       nil ->
+        BlocksLogger.warn("Block with no script clicked: #{blockname}")
         blocks
 
       script ->
         {:ok, str} = Poison.encode(map)
 
         try do
-          Task.await(Task.async(fn -> System.cmd(Path.expand(script), [str]) end), 1000)
+          Task.await(Task.async(fn -> System.cmd(Path.expand(script), [str]) end), 100)
         catch
-          :exit, _ -> nil
+          :exit, _ ->
+            BlocksLogger.warn("Click script for #{blockname} timed out")
         end
     end
 
@@ -166,9 +174,10 @@ defmodule EventLoop do
     tasks
     |> Enum.map(fn x ->
       try do
-        Task.await(x, 1000)
+        Task.await(x, 100)
       catch
         :exit, _ ->
+          BlocksLogger.warn("An update script timed out")
           {nil, []}
       end
     end)
