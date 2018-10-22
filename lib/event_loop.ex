@@ -62,10 +62,23 @@ defmodule EventLoop do
   end
 
   defp reset_timer(blocks, timer) do
-    Process.cancel_timer(timer)
+    min = get_min_time(blocks)
 
-    get_min_time(blocks)
-    |> (&Process.send_after(self(), {:update, &1}, &1)).()
+    case Process.read_timer(timer) do
+      # timer still running
+      # x is the ms until it's over
+      x when is_integer(x) ->
+        if min < x do
+          Process.cancel_timer(timer)
+          Process.send_after(self(), {:update, min}, min)
+        else
+          timer
+        end
+
+      # if false, timer is already over
+      false ->
+        Process.send_after(self(), {:update, min}, min)
+    end
   end
 
   # if something times out, the message will
