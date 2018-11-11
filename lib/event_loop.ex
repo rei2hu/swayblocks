@@ -203,9 +203,8 @@ defmodule EventLoop do
           {file, newblocks[file]}
 
         _ ->
-          Enum.join(content, ",")
           %{^file => map} = newblocks
-          {file, Map.put(map, :content, content)}
+          {file, Map.put(map, :content, Enum.join(content, ","))}
       end
     end)
     # send updated stuff
