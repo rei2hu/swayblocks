@@ -13,8 +13,8 @@ defmodule SwayBlocks do
   def start(_type, _args) do
     {args, _} = Code.eval_file(Path.expand("~/.config/swayblocks/config.exs"))
 
-    pid1 = spawn(fn -> EventLoop.start(args) end)
-    spawn(fn -> InputHandler.listen(pid1) end)
+    pid1 = spawn_link(fn -> EventLoop.start(args) end)
+    spawn_link(fn -> InputHandler.listen(pid1) end)
     {:ok, self()}
   end
 
