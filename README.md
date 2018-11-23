@@ -1,5 +1,5 @@
 ## swayblocks
-I guess you can call this my version of i3blocks. Supports scripts in any language, click events, and can handle a bit of custom input through stdin.
+I guess you can call this my version of i3blocks. Supports scripts in any language, click events, and has several events that can modify your bar on demand when sent correctly.
 
 ### Installation
 Available through the [AUR](https://aur.archlinux.org/packages/swayblocks/)
@@ -14,7 +14,6 @@ bar {
   status_command swayblocks
 }
 ```
-If you want custom input, you have to modify your status_command, take a look at the [Other Input](https://github.com/rei2hu/swayblocks/wiki/Other-Input) page on the wiki.
 
 ### Usage
 Check out the [wiki](https://github.com/rei2hu/swayblocks/wiki).
