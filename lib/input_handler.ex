@@ -9,6 +9,8 @@ defmodule InputHandler do
   def listen(event_loop_pid) do
     IO.gets("")
     |> String.replace_prefix(",", "")
+    # backwards compatability, previous versions of sway
+    # use a comma as suffix instead of as a prefix
     |> String.replace_suffix(",\n", "")
     |> Poison.decode()
     |> handle_input(event_loop_pid)

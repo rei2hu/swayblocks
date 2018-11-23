@@ -4,6 +4,7 @@ defmodule EventLoop do
     IO.puts("{\"version\":1,\"click_events\":true}")
     IO.puts("[")
 
+    # merge config with default settings
     settings
     |> Enum.map_reduce(%{}, fn x, acc ->
       %{:name => name} = x
@@ -52,7 +53,9 @@ defmodule EventLoop do
         # update self due to timer
         {:update, timeout} ->
           BlocksLogger.info("Timer message recieved #{timeout}")
-          update_self(blocks, order, timeout)
+
+          update_self(blocks, timeout)
+          |> send_blocks(order)
       end
 
     newblocks
@@ -81,15 +84,6 @@ defmodule EventLoop do
     end
   end
 
-  # if something times out, the message will
-  # be received by this and update the state be handled
-  defp late_update(blocks, block, content) do
-    cond do
-      blocks[block] != nil -> put_in(blocks[block].content, Enum.join(content, ","))
-      true -> blocks
-    end
-  end
-
   defp get_min_time(blocks) do
     blocks
     |> Enum.reduce(999_999, fn x, acc ->
@@ -105,14 +99,23 @@ defmodule EventLoop do
     end)
   end
 
+  # if something times out, the message will
+  # be received by this and update the state be handled
+  defp late_update(blocks, block, content) do
+    cond do
+      blocks[block] != nil -> put_in(blocks[block].content, Enum.join(content, ","))
+      true -> blocks
+    end
+  end
+
   defp handle_custom(blocks, order, %{"name" => blockname, "action" => action} = map) do
     # pull out relvant state for action
-    # %{^blockname => block} = blocks
 
     case action do
       "update" ->
         put_in(blocks[blockname].left, 0)
-        |> update_self(order, 0)
+        |> update_self(0)
+        |> send_blocks(order)
 
       "enable" ->
         put_in(blocks[blockname].status, 1)
@@ -152,10 +155,11 @@ defmodule EventLoop do
     end
 
     put_in(blocks[blockname].left, 0)
-    |> update_self(order, 0)
+    |> update_self(0)
+    |> send_blocks(order)
   end
 
-  defp update_self(blocks, order, elapsed) do
+  defp update_self(blocks, elapsed) do
     {tasks, newblocks} =
       blocks
       # a tuple of tasks and blocks
@@ -207,8 +211,6 @@ defmodule EventLoop do
           {file, Map.put(map, :content, Enum.join(content, ","))}
       end
     end)
-    # send updated stuff
-    |> send_blocks(order)
   end
 
   defp send_blocks(blocks, order) do

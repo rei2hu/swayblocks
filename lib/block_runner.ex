@@ -1,13 +1,4 @@
 defmodule BlockRunner do
-  @moduledoc """
-  Handles script output for blocks
-  """
-
-  @doc """
-  Runs a script and decodes it
-
-  Returns list_of_maps
-  """
   def update(name, default) do
     {blocks, 0} = System.cmd(Path.expand(name), [])
 
