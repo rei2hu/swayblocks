@@ -85,7 +85,7 @@ defmodule EventLoop do
   # be received by this and update the state be handled
   defp late_update(blocks, block, content) do
     cond do
-      blocks[block] != nil -> put_in(blocks[block].content, content)
+      blocks[block] != nil -> put_in(blocks[block].content, Enum.join(content, ","))
       true -> blocks
     end
   end
