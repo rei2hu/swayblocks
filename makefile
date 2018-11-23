@@ -18,4 +18,5 @@ build:
 	mix deps.get
 	@echo "### Building file"
 	mix escript.build
-	@echo "### Finished, you should now have a swayblocks standalone binary"
+	@echo "### Finished installing, you should now have a swayblocks standalone binary"
+	@echo "### Check out https://github.com/rei2hu/swayblocks/wiki for specific configuration instructions"
