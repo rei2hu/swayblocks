@@ -159,7 +159,7 @@ defmodule EventLoop do
         {:ok, str} = Poison.encode(map)
 
         try do
-          Task.await(Task.async(fn -> System.cmd(Path.expand(script), [str]) end), 100)
+          Task.await(Task.async(fn -> System.cmd(Path.expand(script), [str, "[" <> block.content <> "]"]) end), 100)
         catch
           :exit, _ ->
             BlocksLogger.warn("Click script for #{blockname} timed out")
