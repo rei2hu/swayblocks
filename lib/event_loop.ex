@@ -129,6 +129,9 @@ defmodule EventLoop do
       "setdefaultkey" ->
         put_in(blocks[blockname].default[map["key"]], map["value"])
 
+      "refresh" ->
+        send_blocks(blocks, order)
+
       _unrecognized ->
         BlocksLogger.warn("Unrecognized custom action: #{action}")
         blocks
