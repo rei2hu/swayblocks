@@ -72,6 +72,7 @@ defmodule EventLoop do
       # x is the ms until it's over
       x when is_integer(x) ->
         if min < x do
+          BlocksLogger.info("Sending timer message to self in #{min}")
           Process.cancel_timer(timer)
           Process.send_after(self(), {:update, min}, min)
         else
@@ -80,6 +81,7 @@ defmodule EventLoop do
 
       # if false, timer is already over
       false ->
+        BlocksLogger.info("Sending timer message to self in #{min}")
         Process.send_after(self(), {:update, min}, min)
     end
   end
@@ -113,23 +115,30 @@ defmodule EventLoop do
 
     case action do
       "update" ->
+        BlocksLogger.info("Updating block #{blockname}")
+
         put_in(blocks[blockname].left, 0)
         |> update_self(0)
         |> send_blocks(order)
 
       "enable" ->
+        BlocksLogger.info("Enabling block #{blockname}")
         put_in(blocks[blockname].status, 1)
 
       "disable" ->
+        BlocksLogger.info("Disabling block #{blockname}")
         put_in(blocks[blockname].status, 0)
 
       "set" ->
+        BlocksLogger.info("Setting key for #{blockname}")
         put_in(blocks[blockname][String.to_atom(map["key"])], map["value"])
 
       "setdefaultkey" ->
+        BlocksLogger.info("Setting default key for #{blockname}")
         put_in(blocks[blockname].default[map["key"]], map["value"])
 
       "refresh" ->
+        BlocksLogger.info("Refreshing output")
         send_blocks(blocks, order)
 
       _unrecognized ->
@@ -176,7 +185,7 @@ defmodule EventLoop do
                                    {tasks, newblocks} ->
         cond do
           # add to tasks, reset to refresh
-          left - elapsed <= 0 ->
+          status == 1 && left - elapsed <= 0 ->
             {[Task.async(fn -> {name, BlockRunner.update(name, default)} end) | tasks],
              Map.put(newblocks, name, Map.put(map, :left, refresh))}
 
@@ -217,6 +226,8 @@ defmodule EventLoop do
   end
 
   defp send_blocks(blocks, order) do
+    BlocksLogger.info("Sending blocks")
+
     order
     |> Enum.map_join(",", fn x ->
       %{^x => %{:content => content}} = blocks
