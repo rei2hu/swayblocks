@@ -1,4 +1,5 @@
 defmodule EventLoop do
+  # entry point
   def start(settings) do
     BlocksLogger.info("Starting swayblocks...")
     IO.puts("{\"version\":1,\"click_events\":true}")
@@ -17,21 +18,25 @@ defmodule EventLoop do
            :click => nil,
            :time => 999_999,
            :left => 0,
-           :content => "{}",
            :status => 1,
+           :content => "{}",
            :default => %{}
          })
        )}
     end)
-    |> init
+    |> pre_init
   end
 
-  def init({order, blocks}) do
+  # generic setup that will
+  # only happen the first iteration
+  # through
+  defp pre_init({order, blocks}) do
     get_min_time(blocks)
     |> (&Process.send_after(self(), {:update, &1}, &1)).()
     |> init(blocks, Enum.reverse(order))
   end
 
+  # the actual event loop
   defp init(timer, blocks, order) do
     newblocks =
       receive do
@@ -60,10 +65,13 @@ defmodule EventLoop do
 
     newblocks
     |> reset_timer(timer)
-    # order shouldnt change
     |> init(newblocks, order)
   end
 
+  # reset the timer if it ended or if there
+  # is a shorter time until the next script
+  # executes e.g. a block with less time
+  # is enabled
   defp reset_timer(blocks, timer) do
     min = get_min_time(blocks)
 
@@ -86,6 +94,9 @@ defmodule EventLoop do
     end
   end
 
+  # calculates the minimum time until
+  # the next block will execute. only
+  # considers the time for enabled blocks
   defp get_min_time(blocks) do
     blocks
     |> Enum.reduce(999_999, fn x, acc ->
@@ -110,15 +121,25 @@ defmodule EventLoop do
     end
   end
 
+  # handles a custom event
+  # this will not update the
+  # update block is used
   defp handle_custom(blocks, order, %{"name" => blockname, "action" => action} = map) do
     # pull out relvant state for action
 
     case action do
       "update" ->
         BlocksLogger.info("Updating block #{blockname}")
+        status = blocks[blockname].status
 
-        put_in(blocks[blockname].left, 0)
+        # manually enable the block
+        # this is so it will update even if disabled
+        blocks
+        |> put_in([blockname, :status], 1)
+        |> put_in([blockname, :left], 0)
         |> update_self(0)
+        # reset the status
+        |> put_in([blockname, :status], status)
         |> send_blocks(order)
 
       "enable" ->
@@ -147,6 +168,9 @@ defmodule EventLoop do
     end
   end
 
+  # handles a click event
+  # this will update the block
+  # if the block is enabled
   defp handle_click(blocks, order, %{"name" => blockname} = map) do
     %{^blockname => block} = blocks
 
@@ -159,7 +183,12 @@ defmodule EventLoop do
         {:ok, str} = Poison.encode(map)
 
         try do
-          Task.await(Task.async(fn -> System.cmd(Path.expand(script), [str, "[" <> block.content <> "]"]) end), 100)
+          Task.await(
+            Task.async(fn ->
+              System.cmd(Path.expand(script), [str, "[" <> block.content <> "]"])
+            end),
+            100
+          )
         catch
           :exit, _ ->
             BlocksLogger.warn("Click script for #{blockname} timed out")
@@ -171,6 +200,7 @@ defmodule EventLoop do
     |> send_blocks(order)
   end
 
+  # update blocks because time passed
   defp update_self(blocks, elapsed) do
     {tasks, newblocks} =
       blocks
@@ -185,10 +215,12 @@ defmodule EventLoop do
                                    {tasks, newblocks} ->
         cond do
           # add to tasks, reset to refresh
+          # if enabled and time has expired, run block
           status == 1 && left - elapsed <= 0 ->
             {[Task.async(fn -> {name, BlockRunner.update(name, default)} end) | tasks],
              Map.put(newblocks, name, Map.put(map, :left, refresh))}
 
+          # else if enabled, then update time remaining for this block
           status == 1 ->
             # update map and then put it inside new state
             {tasks, Map.put(newblocks, name, Map.put(map, :left, left - elapsed))}
@@ -199,7 +231,7 @@ defmodule EventLoop do
         end
       end)
 
-    # run tasks
+    # run scripts
     tasks
     |> Enum.map(fn x ->
       try do
@@ -225,6 +257,7 @@ defmodule EventLoop do
     end)
   end
 
+  # print blocks to stdout
   defp send_blocks(blocks, order) do
     BlocksLogger.info("Sending blocks")
 
